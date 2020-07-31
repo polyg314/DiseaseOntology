@@ -2,10 +2,8 @@
     "version": "0.2",
     "requires" : ["pandas"],
     "dumper" : {
-        "data_url" : ["https://s3.pgkb.org/data/annotations.zip",
-                      "https://s3.pgkb.org/data/drugLabels.zip",
-                      "https://s3.pgkb.org/data/occurrences.zip"],
-        "uncompress" : true
+        "data_url" : ["https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/master/src/ontology/doid.obo"],
+        "uncompress" : false
     },
     "uploader" : {
         "parser" : "parser:load_annotations",
