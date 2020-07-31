@@ -5,8 +5,7 @@ from biothings import config
 logging = config.logger
 
 from .networkx import networkx
-from .obonet_all_functions import obonet_all_functions as obonet
-# from .obonet import obonet as obonet
+from .obonet import obonet as obonet
 import re
 import json
 import requests
