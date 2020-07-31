@@ -66,7 +66,6 @@ def load_annotations(data_folder):
     graph = obonet.read_obo(url)
     all_ids = list(graph.nodes())
     doid_mongo_dict = create_doid_mongo_dict(all_ids)
-    json_list = [];
     for id_, data in graph.nodes(data=True):
         disease_ontology = {
             "doid": id_,
@@ -84,5 +83,4 @@ def load_annotations(data_folder):
             "children": [[i][0][1] for i in list(graph.out_edges(id_, keys=True))],   
             "descendants": list(networkx.descendants(graph, id_))
         }
-        json_list.append(current_dict)
-    return(json_list)
+        yield(current_dict)
