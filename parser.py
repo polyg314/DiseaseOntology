@@ -10,6 +10,24 @@ import re
 import json
 import requests
 
+
+mongo_xref_dict = {
+        "UMLS_CUI": 'umls_cui',
+        "ICD10CM": 'icd10',
+        "MESH": 'mesh',
+        "OMIM": 'omim',
+        "GARD": 'gard',
+        "NCI": 'ncit',
+        "ORDO": 'ordo',
+        "ICDO": 'icdo',
+        "MEDDRA": 'meddra',
+        "KEGG": 'kegg',
+        "ICD9CM": 'icd9',
+        "GArD": 'gard',
+        "EFO": 'efo',
+        "DERMO": 'dermo',
+}
+
 def create_doid_mongo_dict(all_ids):
     doid_mongo_dict = {}
     start = 0;
@@ -52,6 +70,10 @@ def get_xrefs(data):
     if 'xref' in data:
         for xref in data['xref']:
             xref = xref.split(":")
+            if xref[0] in mongo_xref_dict:
+                xref[0] = mongo_xref_dict[xref[0]]
+            else: 
+                xref[0] = xref[0].lower()
             if xref[0] in xrefs:
                 xrefs[xref[0]] = [xrefs[xref[0]]] if isinstance(xrefs[xref[0]], str) else xrefs[xref[0]]
                 xrefs[xref[0]].append(xref[1])
@@ -70,17 +92,17 @@ def load_annotations(data_folder):
         disease_ontology = {
             "doid": id_,
             "name": data["name"],
-            "def": data["def"] if "def" in data else ""
+            "def": data["def"] if "def" in data else "",
+            "synonyms": get_synonyms(data),
+            "xrefs": get_xrefs(data),
+            "children": [[i][0][0] for i in list(graph.in_edges(id_, keys=True))],
+            "descendants": list(networkx.ancestors(graph, id_)),
+            "parents": [[i][0][1] for i in list(graph.out_edges(id_, keys=True))],   
+            "ancestors": list(networkx.descendants(graph, id_))
         }
         xrefs = {}
         current_dict = {
             "_id": doid_mongo_dict[id_] if id_ in doid_mongo_dict else id_,
             "disease_ontology": disease_ontology,
-            "synonyms": get_synonyms(data),
-            "xrefs": get_xrefs(data),
-            "parents": [[i][0][0] for i in list(graph.in_edges(id_, keys=True))],
-            "ancestors": list(networkx.ancestors(graph, id_)),
-            "children": [[i][0][1] for i in list(graph.out_edges(id_, keys=True))],   
-            "descendants": list(networkx.descendants(graph, id_))
         }
         yield(current_dict)
