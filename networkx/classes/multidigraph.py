@@ -1,23 +1,17 @@
-#    Copyright (C) 2004-2018 by
-#    Aric Hagberg <hagberg@lanl.gov>
-#    Dan Schult <dschult@colgate.edu>
-#    Pieter Swart <swart@lanl.gov>
-#    All rights reserved.
-#    BSD license.
-#
-# Authors:   Aric Hagberg <hagberg@lanl.gov>
-#            Dan Schult <dschult@colgate.edu>
-#            Pieter Swart <swart@lanl.gov>
 """Base class for MultiDiGraph."""
 from copy import deepcopy
 
 import networkx as nx
-from networkx.classes.graph import Graph  # for doctests
 from networkx.classes.digraph import DiGraph
 from networkx.classes.multigraph import MultiGraph
 from networkx.classes.coreviews import MultiAdjacencyView
-from networkx.classes.reportviews import OutMultiEdgeView, InMultiEdgeView, \
-    DiMultiDegreeView, OutMultiDegreeView, InMultiDegreeView
+from networkx.classes.reportviews import (
+    OutMultiEdgeView,
+    InMultiEdgeView,
+    DiMultiDegreeView,
+    OutMultiDegreeView,
+    InMultiDegreeView,
+)
 from networkx.exception import NetworkXError
 
 
@@ -205,12 +199,18 @@ class MultiDiGraph(MultiGraph, DiGraph):
     extra features can be added. To replace one of the dicts create
     a new graph class by changing the class(!) variable holding the
     factory for that dict-like structure. The variable names are
-    node_dict_factory, adjlist_inner_dict_factory, adjlist_outer_dict_factory,
-    and edge_attr_dict_factory.
+    node_dict_factory, node_attr_dict_factory, adjlist_inner_dict_factory,
+    adjlist_outer_dict_factory, edge_key_dict_factory, edge_attr_dict_factory
+    and graph_attr_dict_factory.
 
     node_dict_factory : function, (default: dict)
         Factory function to be used to create the dict containing node
         attributes, keyed by node id.
+        It should require no arguments and return a dict-like object
+
+    node_attr_dict_factory: function, (default: dict)
+        Factory function to be used to create the node attribute
+        dict which holds attribute values keyed by attribute name.
         It should require no arguments and return a dict-like object
 
     adjlist_outer_dict_factory : function, (default: dict)
@@ -230,7 +230,12 @@ class MultiDiGraph(MultiGraph, DiGraph):
 
     edge_attr_dict_factory : function, (default: dict)
         Factory function to be used to create the edge attribute
-        dict which holds attrbute values keyed by attribute name.
+        dict which holds attribute values keyed by attribute name.
+        It should require no arguments and return a dict-like object.
+
+    graph_attr_dict_factory : function, (default: dict)
+        Factory function to be used to create the graph attribute
+        dict which holds attribute values keyed by attribute name.
         It should require no arguments and return a dict-like object.
 
     Typically, if your extension doesn't impact the data structure all
@@ -254,6 +259,7 @@ class MultiDiGraph(MultiGraph, DiGraph):
     creating graph subclasses by overwriting the base class `dict` with
     a dictionary-like object.
     """
+
     # node_dict_factory = dict    # already assigned in Graph
     # adjlist_outer_dict_factory = dict
     # adjlist_inner_dict_factory = dict
@@ -422,11 +428,11 @@ class MultiDiGraph(MultiGraph, DiGraph):
         if u not in self._succ:
             self._succ[u] = self.adjlist_inner_dict_factory()
             self._pred[u] = self.adjlist_inner_dict_factory()
-            self._node[u] = {}
+            self._node[u] = self.node_attr_dict_factory()
         if v not in self._succ:
             self._succ[v] = self.adjlist_inner_dict_factory()
             self._pred[v] = self.adjlist_inner_dict_factory()
-            self._node[v] = {}
+            self._node[v] = self.node_attr_dict_factory()
         if key is None:
             key = self.new_edge_key(u, v)
         if v in self._succ[u]:
@@ -492,18 +498,17 @@ class MultiDiGraph(MultiGraph, DiGraph):
         """
         try:
             d = self._adj[u][v]
-        except KeyError:
-            raise NetworkXError(
-                "The edge %s-%s is not in the graph." % (u, v))
+        except KeyError as e:
+            raise NetworkXError(f"The edge {u}-{v} is not in the graph.") from e
         # remove the edge with specified data
         if key is None:
             d.popitem()
         else:
             try:
                 del d[key]
-            except KeyError:
-                msg = "The edge %s-%s with key %s is not in the graph."
-                raise NetworkXError(msg % (u, v, key))
+            except KeyError as e:
+                msg = f"The edge {u}-{v} with key {key} is not in the graph."
+                raise NetworkXError(msg) from e
         if len(d) == 0:
             # remove the key entries if last edge
             del self._succ[u][v]
@@ -714,7 +719,7 @@ class MultiDiGraph(MultiGraph, DiGraph):
 
     @property
     def out_degree(self):
-        """Return an iterator for (node, out-degree) or out-degree for single node.
+        """Returns an iterator for (node, out-degree) or out-degree for single node.
 
         out_degree(self, nbunch=None, weight=None)
 
@@ -759,15 +764,15 @@ class MultiDiGraph(MultiGraph, DiGraph):
         return OutMultiDegreeView(self)
 
     def is_multigraph(self):
-        """Return True if graph is a multigraph, False otherwise."""
+        """Returns True if graph is a multigraph, False otherwise."""
         return True
 
     def is_directed(self):
-        """Return True if graph is directed, False otherwise."""
+        """Returns True if graph is directed, False otherwise."""
         return True
 
     def to_undirected(self, reciprocal=False, as_view=False):
-        """Return an undirected representation of the digraph.
+        """Returns an undirected representation of the digraph.
 
         Parameters
         ----------
@@ -801,7 +806,7 @@ class MultiDiGraph(MultiGraph, DiGraph):
         returns a shallow copy of the data.
 
         See the Python copy module for more information on shallow
-        and deep copies, https://docs.python.org/2/library/copy.html.
+        and deep copies, https://docs.python.org/3/library/copy.html.
 
         Warning: If you have subclassed MultiDiGraph to use dict-like
         objects in the data structure, those changes do not transfer
@@ -825,20 +830,24 @@ class MultiDiGraph(MultiGraph, DiGraph):
         G.graph.update(deepcopy(self.graph))
         G.add_nodes_from((n, deepcopy(d)) for n, d in self._node.items())
         if reciprocal is True:
-            G.add_edges_from((u, v, key, deepcopy(data))
-                             for u, nbrs in self._adj.items()
-                             for v, keydict in nbrs.items()
-                             for key, data in keydict.items()
-                             if v in self._pred[u] and key in self._pred[u][v])
+            G.add_edges_from(
+                (u, v, key, deepcopy(data))
+                for u, nbrs in self._adj.items()
+                for v, keydict in nbrs.items()
+                for key, data in keydict.items()
+                if v in self._pred[u] and key in self._pred[u][v]
+            )
         else:
-            G.add_edges_from((u, v, key, deepcopy(data))
-                             for u, nbrs in self._adj.items()
-                             for v, keydict in nbrs.items()
-                             for key, data in keydict.items())
+            G.add_edges_from(
+                (u, v, key, deepcopy(data))
+                for u, nbrs in self._adj.items()
+                for v, keydict in nbrs.items()
+                for key, data in keydict.items()
+            )
         return G
 
     def reverse(self, copy=True):
-        """Return the reverse of the graph.
+        """Returns the reverse of the graph.
 
         The reverse is a graph with the same nodes and edges
         but with the directions of the edges reversed.
@@ -854,7 +863,9 @@ class MultiDiGraph(MultiGraph, DiGraph):
             H = self.__class__()
             H.graph.update(deepcopy(self.graph))
             H.add_nodes_from((n, deepcopy(d)) for n, d in self._node.items())
-            H.add_edges_from((v, u, k, deepcopy(d)) for u, v, k, d
-                             in self.edges(keys=True, data=True))
+            H.add_edges_from(
+                (v, u, k, deepcopy(d))
+                for u, v, k, d in self.edges(keys=True, data=True)
+            )
             return H
         return nx.graphviews.reverse_view(self)

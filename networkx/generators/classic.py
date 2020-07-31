@@ -1,12 +1,3 @@
-#    Copyright (C) 2004-2018 by
-#    Aric Hagberg <hagberg@lanl.gov>
-#    Dan Schult <dschult@colgate.edu>
-#    Pieter Swart <swart@lanl.gov>
-#    All rights reserved.
-#    BSD license.
-#
-# Authors: Aric Hagberg (hagberg@lanl.gov)
-#          Pieter Swart (swart@lanl.gov)
 """Generators for some classic graphs.
 
 The typical graph generator is called as follows:
@@ -18,40 +9,43 @@ as a simple graph. Except for empty_graph, all the generators
 in this module return a Graph class (i.e. a simple, undirected graph).
 
 """
-from __future__ import division
 
 import itertools
 
 import networkx as nx
 from networkx.classes import Graph
 from networkx.exception import NetworkXError
-from networkx.utils import accumulate
+from itertools import accumulate
 from networkx.utils import nodes_or_number
 from networkx.utils import pairwise
 
-__all__ = ['balanced_tree',
-           'barbell_graph',
-           'complete_graph',
-           'complete_multipartite_graph',
-           'circular_ladder_graph',
-           'circulant_graph',
-           'cycle_graph',
-           'dorogovtsev_goltsev_mendes_graph',
-           'empty_graph',
-           'full_rary_tree',
-           'ladder_graph',
-           'lollipop_graph',
-           'null_graph',
-           'path_graph',
-           'star_graph',
-           'trivial_graph',
-           'turan_graph',
-           'wheel_graph']
+__all__ = [
+    "balanced_tree",
+    "barbell_graph",
+    "binomial_tree",
+    "complete_graph",
+    "complete_multipartite_graph",
+    "circular_ladder_graph",
+    "circulant_graph",
+    "cycle_graph",
+    "dorogovtsev_goltsev_mendes_graph",
+    "empty_graph",
+    "full_rary_tree",
+    "ladder_graph",
+    "lollipop_graph",
+    "null_graph",
+    "path_graph",
+    "star_graph",
+    "trivial_graph",
+    "turan_graph",
+    "wheel_graph",
+]
 
 
 # -------------------------------------------------------------------
 #   Some Classic Graphs
 # -------------------------------------------------------------------
+
 
 def _tree_edges(n, r):
     if n == 0:
@@ -105,7 +99,7 @@ def full_rary_tree(r, n, create_using=None):
 
 
 def balanced_tree(r, h, create_using=None):
-    """Return the perfectly balanced `r`-ary tree of height `h`.
+    """Returns the perfectly balanced `r`-ary tree of height `h`.
 
     Parameters
     ----------
@@ -150,7 +144,7 @@ def balanced_tree(r, h, create_using=None):
 
 
 def barbell_graph(m1, m2, create_using=None):
-    """Return the Barbell Graph: two complete graphs connected by a path.
+    """Returns the Barbell Graph: two complete graphs connected by a path.
 
     For $m1 > 1$ and $m2 >= 0$.
 
@@ -171,11 +165,9 @@ def barbell_graph(m1, m2, create_using=None):
 
     """
     if m1 < 2:
-        raise NetworkXError(
-            "Invalid graph description, m1 should be >=2")
+        raise NetworkXError("Invalid graph description, m1 should be >=2")
     if m2 < 0:
-        raise NetworkXError(
-            "Invalid graph description, m2 should be >=0")
+        raise NetworkXError("Invalid graph description, m2 should be >=0")
 
     # left barbell
     G = complete_graph(m1, create_using)
@@ -187,12 +179,41 @@ def barbell_graph(m1, m2, create_using=None):
     if m2 > 1:
         G.add_edges_from(pairwise(range(m1, m1 + m2)))
     # right barbell
-    G.add_edges_from((u, v) for u in range(m1 + m2, 2 * m1 + m2)
-                     for v in range(u + 1, 2 * m1 + m2))
+    G.add_edges_from(
+        (u, v) for u in range(m1 + m2, 2 * m1 + m2) for v in range(u + 1, 2 * m1 + m2)
+    )
     # connect it up
     G.add_edge(m1 - 1, m1)
     if m2 > 0:
         G.add_edge(m1 + m2 - 1, m1 + m2)
+    return G
+
+
+def binomial_tree(n):
+    """Returns the Binomial Tree of order n.
+
+    The binomial tree of order 0 consists of a single vertex. A binomial tree of order k
+    is defined recursively by linking two binomial trees of order k-1: the root of one is
+    the leftmost child of the root of the other.
+
+    Parameters
+    ----------
+    n : int
+        Order of the binomial tree.
+
+    Returns
+    -------
+    G : NetworkX graph
+        A binomial tree of $2^n$ vertices and $2^n - 1$ edges.
+
+    """
+    G = nx.empty_graph(1)
+    N = 1
+    for i in range(n):
+        edges = [(u + N, v + N) for (u, v) in G.edges]
+        G.add_edges_from(edges)
+        G.add_edge(0, N)
+        N *= 2
     return G
 
 
@@ -235,7 +256,7 @@ def complete_graph(n, create_using=None):
 
 
 def circular_ladder_graph(n, create_using=None):
-    """Return the circular ladder graph $CL_n$ of length n.
+    """Returns the circular ladder graph $CL_n$ of length n.
 
     $CL_n$ consists of two concentric n-cycles in which
     each of the n pairs of concentric nodes are joined by an edge.
@@ -304,7 +325,7 @@ def circulant_graph(n, offsets, create_using=None):
 
 @nodes_or_number(0)
 def cycle_graph(n, create_using=None):
-    """Return the cycle graph $C_n$ of cyclically connected nodes.
+    """Returns the cycle graph $C_n$ of cyclically connected nodes.
 
     $C_n$ is a path with its two end-nodes connected.
 
@@ -329,7 +350,7 @@ def cycle_graph(n, create_using=None):
 
 
 def dorogovtsev_goltsev_mendes_graph(n, create_using=None):
-    """Return the hierarchically constructed Dorogovtsev-Goltsev-Mendes graph.
+    """Returns the hierarchically constructed Dorogovtsev-Goltsev-Mendes graph.
 
     n is the generation.
     See: arXiv:/cond-mat/0112143 by Dorogovtsev, Goltsev and Mendes.
@@ -344,7 +365,7 @@ def dorogovtsev_goltsev_mendes_graph(n, create_using=None):
     G.add_edge(0, 1)
     if n == 0:
         return G
-    new_node = 2         # next node to be added
+    new_node = 2  # next node to be added
     for i in range(1, n + 1):  # iterate over number of generations.
         last_generation_edges = list(G.edges())
         number_of_edges_in_last_generation = len(last_generation_edges)
@@ -357,7 +378,7 @@ def dorogovtsev_goltsev_mendes_graph(n, create_using=None):
 
 @nodes_or_number(0)
 def empty_graph(n=0, create_using=None, default=nx.Graph):
-    """Return the empty graph with n nodes and zero edges.
+    """Returns the empty graph with n nodes and zero edges.
 
     Parameters
     ----------
@@ -435,7 +456,7 @@ def empty_graph(n=0, create_using=None, default=nx.Graph):
     """
     if create_using is None:
         G = default()
-    elif hasattr(create_using, '_adj'):
+    elif hasattr(create_using, "_adj"):
         # create_using is a NetworkX style Graph
         create_using.clear()
         G = create_using
@@ -449,7 +470,7 @@ def empty_graph(n=0, create_using=None, default=nx.Graph):
 
 
 def ladder_graph(n, create_using=None):
-    """Return the Ladder graph of length n.
+    """Returns the Ladder graph of length n.
 
     This is two paths of n nodes, with
     each pair connected by a single edge.
@@ -468,7 +489,7 @@ def ladder_graph(n, create_using=None):
 
 @nodes_or_number([0, 1])
 def lollipop_graph(m, n, create_using=None):
-    """Return the Lollipop Graph; `K_m` connected to `P_n`.
+    """Returns the Lollipop Graph; `K_m` connected to `P_n`.
 
     This is the Barbell Graph without the right barbell.
 
@@ -499,11 +520,9 @@ def lollipop_graph(m, n, create_using=None):
     if isinstance(m, int):
         n_nodes = [len(m_nodes) + i for i in n_nodes]
     if M < 2:
-        raise NetworkXError(
-            "Invalid graph description, m should be >=2")
+        raise NetworkXError("Invalid graph description, m should be >=2")
     if N < 0:
-        raise NetworkXError(
-            "Invalid graph description, n should be >=0")
+        raise NetworkXError("Invalid graph description, n should be >=0")
 
     # the ball
     G = complete_graph(m_nodes, create_using)
@@ -520,7 +539,7 @@ def lollipop_graph(m, n, create_using=None):
 
 
 def null_graph(create_using=None):
-    """Return the Null graph with no nodes or edges.
+    """Returns the Null graph with no nodes or edges.
 
     See empty_graph for the use of create_using.
 
@@ -531,7 +550,7 @@ def null_graph(create_using=None):
 
 @nodes_or_number(0)
 def path_graph(n, create_using=None):
-    """Return the Path graph `P_n` of linearly connected nodes.
+    """Returns the Path graph `P_n` of linearly connected nodes.
 
     Parameters
     ----------
@@ -720,8 +739,8 @@ def complete_multipartite_graph(*subset_sizes):
     try:
         for (i, subset) in enumerate(subsets):
             G.add_nodes_from(subset, subset=i)
-    except TypeError:
-        raise NetworkXError("Arguments must be all ints or all iterables")
+    except TypeError as e:
+        raise NetworkXError("Arguments must be all ints or all iterables") from e
 
     # Across subsets, all vertices should be adjacent.
     # We can use itertools.combinations() because undirected.
