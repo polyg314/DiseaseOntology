@@ -3,7 +3,8 @@
     "requires" : ["pandas"],
     "dumper" : {
         "data_url" : ["https://raw.githubusercontent.com/DiseaseOntology/HumanDiseaseOntology/master/src/ontology/doid.obo"],
-        "uncompress" : false
+        "uncompress" : false,
+        "schedule" : "0 0 1,15 * *"
     },
     "uploader" : {
         "parser" : "parser:load_annotations",
