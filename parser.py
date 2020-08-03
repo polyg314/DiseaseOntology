@@ -4,8 +4,8 @@ from biothings.utils.dataload import dict_convert, dict_sweep
 from biothings import config
 logging = config.logger
 
-from .networkx import networkx
-from . import obonet 
+import networkx
+import obonet as obonet
 import re
 import json
 import requests
