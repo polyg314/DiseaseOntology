@@ -42,8 +42,8 @@ def load_annotations(data_folder):
             "_id": doid_mondo_dict[id_] if id_ in doid_mondo_dict else id_,
             "disease_ontology": disease_ontology,
         }
-        if(id_ not in id_list):
-            id_list.append(id_)
+        if(current_dict["id_"] not in id_list):
+            id_list.append(current_dict["id_"])
             yield(current_dict)
 
 
